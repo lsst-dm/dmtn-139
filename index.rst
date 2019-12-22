@@ -84,6 +84,10 @@ This document, when complete, will review the established LSST requirements appl
 Requirements
 ============
 
+The relevant requirements from the LSST document tree are excerpted below.
+They have been lightly edited for compactness (such as by compressing bullet points to in-line lists), but the language is intact.
+
+
 SRD (LPM-17)
 ------------
 
@@ -94,7 +98,6 @@ In Section 3.5, "Data Processing and Management Requirements", it is stated:
 - "Observing conditions, such as point-spread function and background level, will be evaluated and known for each visit" - this suggests the availability of this sort of information as a metadata catalog.
 - "Images and catalog data will be released to publicly-accessible repositories as soon as possible after they are obtained." - this implies the existence of an accessible image data service for the Prompt (Level 1) image data products.
 - "fixed 'snapshots' of the data should periodically be released [including] images, corrected for instrumental artifacts, and photometrically and astrometrically calibrated, will be released to [the] public every DRT1 [1.0] years [...].  [...] images will be released for both single visits and for appropriately co-added data (such as those optimized for depth and for weak lensing analysis)." - this clarifies the availability of both broard types of image data products.
-
 
 
 LSR (LSE-29)
@@ -112,9 +115,23 @@ LSR (LSE-29)
 - LSR-REQ-0054, Data Product Access Interface: "The LSST shall provide access to all its public data products through an interface that utilizes, to the maximum practicable extent, community-based standards such as those for pixel-based images (e.g., FITS), as well as those being developed by the Virtual Observatory (VO) community, and that facilitates user data analysis and the production of Level 3 and other user-defined data products at LSST-provided facilities and at remote sites."
 
 
-
 OSS (LSE-30)
 ------------
+
+- OSS-REQ-0129, Exposures (Level 1): "The Level 1 Data Products shall include the following types of Exposures: 1) Raw Exposures as obtained from the Camera and assembled/re-formatted for processing; 2) Processed Exposures (trimmed, de-biased, flattened, etc. - i.e., provisionally calibrated); 3) Difference Exposures.  Discussion: All exposures, other than raw exposures, may be regenerated on demand from raw data, rather than be physically stored." - NB: the choice of regenerating on-demand vs. storage was to be left as an implementation-era, or even operations-era, choice to enable performing appropriate trades based on then-year costs.
+- OSS-REQ-0130, Catalogs (Level 1): "The Level 1 Data Products shall include the following catalogs: 1) Exposure meta-data, [...]"
+- OSS-REQ-0133, Level 2 Data Products: "Level 2 Data Products shall periodically be derived from a processing pass over the complete data set."
+- OSS-REQ-0134, Level 2 Data Product Availability: "All Level 2 Data Products shall be made public as part of a Data Release, with releases coming at least once every time DRT1, and as soon as possible following the completion of data release processing as is consistent with verifying the applicable data quality requirements."
+- OSS-REQ-0135, Uniformly calibrated and processed versions of Level 1 Data Products: "In association with the production of the Level 2 Data Products, a data release shall also include uniformly processed and calibrated versions of all the Level 1 Data Products."
+- OSS-REQ-0136, Co-added Exposures: "The Level 2 Data Products shall include the following types of co-added Exposures, covering the full exposed area of the survey: 1) Template co-adds for creating Difference Exposures, per filter band; 2) Detection co-adds for object detection, optimized for the faintest limiting magnitude; may be both multi-band and single-band; 3) Multi-band (RGB) co-adds for visualization and EPO."
+- OSS-REQ-0140, Production [Level 3 Data Products]: "It shall be possible to create Level 3 Data Products either using external or internal (Data Access Center) resources, provided they meet certain requirements. LSST shall provide a set of specifications and a software toolkit to facilitate this. Level 3 Data Products may consist of new catalogs, additional data to be federated with existing catalogs, or **image data** [our emphasis]."
+- OSS-REQ-0177, Data Access Environment: "The LSST shall provide an open-source environment for access to its public data products, including images and catalogs."
+- OSS-REQ-0178, Data Distribution: "The LSST project shall facilitate the distribution of its data products in bulk to other sites and institutions willing to host it, in accordance with LSSTC Board approved policies for data release."
+- OSS-REQ-0181, Data Products Query and Download Infrastructure: "The LSST project shall provide processing, storage, and network resources for general community query and download access to LSST data products."
+- OSS-REQ-0186, Access to Previous Data Releases: "The LSST Project shall provide data access services for the current Level 1 data, the most recent nDRMin [2] Data Releases, and multiple older Data Releases."
+- OSS-REQ-0396, Data Access Services: "The data access services shall be designed to permit, and their software implementation shall support, the service of at least nDRTot [11] Data Releases accumulated over the (find the actual survey-length parameter) surveyYears-year [10-year] planned survey.
+- OSS-REQ-0400, Subsets Support: "The data access services shall be designed to support the service of operations-designated subsets of the content of the “older Data Releases” referred to in requirement OSS-REQ-0186 from high-latency media."
+- OSS-REQ-0262, Science Image Delivery: "The imaging system shall deliver the science data with a unique identifier per device per exposure."
 
 DMSR (LSE-61)
 -------------
@@ -123,8 +140,35 @@ LSP Requirements (LDM-554)
 --------------------------
 
 
+Image Data Products
+===================
+
+DPDD
+----
+
+According to the DPDD, the following types of image data products will be provided:
+
+Current Science Pipelines algorithmic considerations
+----------------------------------------------------
+
+
+
 Use Cases
 =========
+
+
+Community Standards
+===================
+
+IVOA
+----
+
+CAOM2
+-----
+
+FITS
+----
+
 
 Service Concept
 ===============
