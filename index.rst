@@ -86,7 +86,7 @@ Requirements
 
 The relevant requirements from the LSST document tree are excerpted below.
 They have been lightly edited for compactness (such as by compressing bullet points to in-line lists), but the language is intact.
-
+(At this time the requirements have largely been left in the order they appear in their source documents.)
 
 SRD (LPM-17)
 ------------
@@ -129,12 +129,58 @@ OSS (LSE-30)
 - OSS-REQ-0178, Data Distribution: "The LSST project shall facilitate the distribution of its data products in bulk to other sites and institutions willing to host it, in accordance with LSSTC Board approved policies for data release."
 - OSS-REQ-0181, Data Products Query and Download Infrastructure: "The LSST project shall provide processing, storage, and network resources for general community query and download access to LSST data products."
 - OSS-REQ-0186, Access to Previous Data Releases: "The LSST Project shall provide data access services for the current Level 1 data, the most recent nDRMin [2] Data Releases, and multiple older Data Releases."
-- OSS-REQ-0396, Data Access Services: "The data access services shall be designed to permit, and their software implementation shall support, the service of at least nDRTot [11] Data Releases accumulated over the (find the actual survey-length parameter) surveyYears-year [10-year] planned survey.
-- OSS-REQ-0400, Subsets Support: "The data access services shall be designed to support the service of operations-designated subsets of the content of the “older Data Releases” referred to in requirement OSS-REQ-0186 from high-latency media."
+- OSS-REQ-0396, Data Access Services: "The data access services shall be designed to permit, and their software implementation shall support, the service of at least nDRTot [11] Data Releases accumulated over the (find the actual survey-length parameter) surveyYears-year [10-year] planned survey."
+- OSS-REQ-0400, Subsets Support: "The data access services shall be designed to support the service of operations-designated subsets of the content of the “older Data Releases” referred to in requirement OSS-REQ-0186 from high-latency media." - In the context of this document the service of images from "high-latency media" (e.g., tape) are of particular interest.
 - OSS-REQ-0262, Science Image Delivery: "The imaging system shall deliver the science data with a unique identifier per device per exposure."
 
 DMSR (LSE-61)
 -------------
+
+Requirements on Services
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- DMS-REQ-0380 (Priority: 1b), HiPS Service: "The Data Management system shall include a secure and authenticated Internet endpoint for an IVOA-compliant HiPS service. This service shall be advertised via Registry as well as in the HiPS community mechanism operated by CDS, or whatever equivalent mechanism may exist in the LSST operations era."
+- DMS-REQ-0381 (Priority: 2), HiPS Linkage to Coadds: "The HiPS maps produced by the Data Management system shall provide for straightforward linkage from the HiPS data to the underlying LSST coadded images. This SHOULD be implemented using a mechanism supported by both the LSST Science Platform and by community tools."
+- DMS-REQ-0384 (Priority: 1b), Export MOCs As FITS: "The Data Management system shall provide a means for exporting the LSST-generated MOCs in the FITS serialization form defined in the IVOA MOC Recommendation."
+- DMS-REQ-0340 (Priority: 2), Access Controls of Level 3 Data Products: "All Level 3 data products shall be configured to have the ability to have access restricted to the owner, a list of people, a named group, or be completely public." - Note that Level 3 data products may include user-generated images.
+- DMS-REQ-0160 (Priority: 1b), Provide User Interface Services: "The DMS shall provide software for User Interface Services, including services to: browse LSST data products through astronomical views or visualizations; create and serve ”best” images of selectable regions of the sky; resample and re-project images, and visualize catalog content." - We assume that, in line with the Science Platform Vision, LSE-319, these services must include programmatic Web APIs.
+- DMS-REQ-0298 (Priority: 1a), Data Product and Raw Data Access: "The DMS shall provide software for Data Access Services to list and retrieve image, file, and catalog data products (including raw telescope images and calibration data), their associated metadata, their provenance, or any combination thereof, independent of their actual storage location."
+- DMS-REQ-0065 (Priority: 1b), Provide Image Access Services: "The DMS shall provide a service for Image Access through community data access protocols, to support programmatic search and retrieval of images or image cut-outs. The service shall support one or more community standard formats, including the LSST pipeline input format.  *Discussion:*  At least the FITS image format will be supported though an IVOA-standard service such as SIAP. Other image formats such as JPG may be more compatible with education/public outreach needs."
+- DMS-REQ-0387 (Priority: 1b), Serve Archived Provenance: "The Data Management System shall make the archived provenance data available to science users together with the associated science data products."
+- DMS-REQ-0311 (Priority: 1b), Regenerate Un-archived Data Products: "The DMS shall be able to regenerate unarchived data products to within scientifically reasonable tolerances. *Discussion:* Unarchived data products currently include Processed Visit Images for single visits, some Coadds, and Difference Images. Scientifically reasonable tolerances means well within the formal uncertainties of the data product, given the same production software, calibrations, and compute platform, all of which are expected to change (and improve) during the course of the survey."
+- DMS-REQ-0336 (Priority: 1b), Regenerating Data Products from Previous Data Releases: "The DMS shall be able to regenerate data products from previous data releases to within scientifically reasonable tolerances."
+- DMS-REQ-0127 (Priority: 2), Access to input images for DAC-based Level 3 processing: "The DMS shall provide access to all Level 1 and Level 2 image products through the LSST project’s Data Access Centers, and any others that have been established and funded, for Level 3 processing that takes place at the DACs."
+
+
+Performance Requirements
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- DMS-REQ-0375 (Priority: 2), Retrieval of postage stamp light curve images: "Postage stamp cutouts, of size **postageStampSize** [51 pixels] square, of all observations of a single Object shall be retrievable within **postageStampRetrievalTime** [10 seconds], with **postageStampRetrievalUsers** [10] simultaneous requests of distinct Objects."
+- DMS-REQ-0374 (Priority: 1b), Retrieval of a PVI from a single CCD: "A Processed Visit Image of a single CCD shall be retrievable using the VO SIAv2 protocol within **pviRetrievalTime** [10 seconds] with **pviRetrievalUsers** [20] simultaneous requests for distinct single-CCD PVIs."
+- DMS-REQ-0376 (Priority: 1b), Retrieval of focal-plane visit images: "All Processed Visit Images for a single visit that are available in cache, including mask and variance planes, shall be identifiable with a single IVOA SIAv2 service query and retrievable, using the link(s) provided in the response, within **allPviRetrievalTime** [60 seconds]. This requirement shall be met for up to **allPviRetrievalUsers** [10] simultaneous requests for distinct focal-plane PVI sets."
+- DMS-REQ-0377 (Priority: 1b), Retrieval of a CCD-sized image from a coadd: "A CCD-sized cutout of a coadd, including mask and variance planes, shall be retrievable using the IVOA SODA protocol within **ccdRetrievalTime** [15 seconds] with **ccdRetrievalUsers** [20] simultaneous requests for distinct areas of the sky."
+- DMS-REQ-0373 (Priority: 2), Retrieval of focal-plane-sized images: "A 10 square degree coadd, including mask and variance planes, shall be retrievable using the IVOA SODA protocol within **fplaneRetrievalTime** [60 seconds] with **fplaneRetrievalUsers** [10] simultaneous requests for distinct areas of the sky."
+
+
+Select Requirements on Types and Content of Images (assembled here for context)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- DMS-REQ-0326 (Priority: 2), Storing Approximations of Per-pixel Metadata: "Image depth and mask information shall be available in a parametrized approximate form in addition to a full per-pixel form."
+- DMS-REQ-0024 (Priority: 1a), Raw Image Assembly: "The DMS shall assemble the combination of raw exposure data from all the readout channels from a single Sensor to form a single image for that sensor. The image data and relevant exposure metadata shall be integrated into a standard format suitable for down-stream processing, archiving, and distribution to the user community."
+- DMS-REQ-0068 (Priority: 1a), Raw Science Image Metadata: "For each raw science image, the DMS shall store image metadata including at least: i) Time of exposure start and end, referenced to TAI, and DUT1; ii) Site metadata (site seeing, transparency, weather, observatory location); iii) Telescope metadata (telescope pointing, active optics state, environmental state); iv) Camera metadata (shutter trajectory, wavefront sensors, environmental state); v) Program metadata (identifier for main survey, deep drilling, etc.); and vi) Scheduler metadata (visitID, intended number of exposures in the visit).
+- DMS-REQ-0069 (Priority: 1a), Processed Visit Images: "The DMS shall produce Processed Visit Images, in which the corresponding raw sensor array data has been trimmed of overscan and corrected for instrumental signature. Images obtained in pairs during a standard visit are combined."
+- DMS-REQ-0010 (Priority: 1b), Difference Exposures: "The DMS shall create a Difference Exposure from each Processed Visit Image by subtracting a re-projected, scaled, PSF-matched Template Image in the same passband. *Discussion:* Difference Exposures are not archived, and are retained for only a limited time to facilitate Alert processing. They can be re-generated for users on-demand."
+- DMS-REQ-0334 (Priority: 1b), Persisting (Level 2) Data Products: "All per-band deep coadds and best seeing coadds shall be kept indefinitely and made available to users.  *Discussion:* This requirement is intended to list all the data products that must be archived rather than regenerated on demand. DMS-REQ-0069 indicates in discussion that Processed Visit Images are not archived. DMS-REQ-0010 indicates in the discussion that Difference Exposures are not archived."
+- DMS-REQ-0279 (Priority: 1b), Deep Detection Coadds: "The DMS shall periodicaly create Co-added Images in each of the *u,g,r,i,z,y* passbands by combining all archived exposures taken of the same region of sky and in the same passband that meet specified quality conditions."
+- DMS-REQ-0280 (Priority: 1b), Template Coadds: "The DMS shall periodically create Template Images in each of the *u,g,r,i,z,y* passbands that are constructed identically to Deep Detection Coadds, but where the contributing Calibrated Exposures are limited to a range of observing epochs **templateMaxTimespan** [1 year] the images are partitioned by airmass into multiple bins, and where the quality criteria may be different."
+- DMS-REQ-0281 (Priority: 1b), Multi-Band Coadds: "The DMS shall periodically create Multi-band Coadd images which are constructed similarly to Deep Detection Coadds, but where all passbands are combined."
+- DMS-REQ-0330 (Priority: 2), Best Seeing Coadds: "Best seeing coadds shall be made for each band (including multi-color)."
+- DMS-REQ-0335 (Priority: 1b), PSF-Matched Coadds: "One (ugrizy plus multi-band) set of PSF-matched coadds shall be made but shall not be archived."
+- DMS-REQ-0338 (Priority: 2), Targeted Coadds: "It shall be possible to retain small sections of all generated coadds."
+- DMS-REQ-0106 (Priority: 1b), Coadded Image Provenance: "For each Coadded Image, DMS shall store: the list of input images and the pipeline parameters, including software versions, used to derive it, and a sufficient set of metadata attributes for users to re-create them in whole or in part."
+- DMS-REQ-0132 (Priority: 1a), Calibration Image Provenance: "For each Calibration Production data product, DMS shall record: the list of input exposures and the range of dates over which they were obtained; the processing parameters; the calibration products used to derive it; and a set of metadata attributes including at least: the date of creation; the calibration image type (e.g. dome flat, superflat, bias, etc); the provenance of the processing software; and the instrument configuration including the filter in use, if applicable." - We assume that this information is not only to be recorded but also made available to users.
+- DMS-REQ-0329 (Priority: 2), All-Sky Visualization of Data Releases: "Data Release Processing shall generate co-adds suitable for use in all-sky visualization tools, allowing panning and zooming of the entire data release."
+
 
 LSP Requirements (LDM-554)
 --------------------------
