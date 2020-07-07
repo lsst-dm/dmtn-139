@@ -185,6 +185,9 @@ Select Requirements on Types and Content of Images (assembled here for context)
 LSP Requirements (LDM-554)
 --------------------------
 
+- 
+
+
 
 Image Data Products
 ===================
@@ -270,6 +273,55 @@ Notebook Aspect and External Access
 PyVO & Astroquery
 
 Development of PyVO SIAv2 capability.
+
+
+Appendix: Portal-derived Requirements on Image Services
+=======================================================
+
+The LDM-554 requirements on Portal Aspect functionality include a number of requirements on capabilities for image and image metaata queries.
+While these requirements do not specify an implementation for the interface with any underlying services used for image data retrieval, the basic architecture of the three-Aspect Science Platform implies that data access capabilities in the Portal Aspect (and Notebook Aspect) should be paralleled by capabilities in the Web API Aspect.
+
+In this Appendix we list the relevant Portal Aspect requirements and discuss their implications on Web API Aspect image and image-metadata query services.
+
+Note that many of the capabilities mentioned below will not be part of the "frozen" post-DM-10 Portal Aspect.
+However, if a future Portal Aspect implementation is to provide these capabilities, it must be understood in advance what Web API Aspect capabilities must be available for the Portal Aspect capabilities eventually to be implemented.
+
+Requirements
+------------
+
+- DMS-PRTL-REQ-0035, Query for Single Epoch Visit Images: "The Portal aspect shall enable a user to proceed from a visit-selection query or a list of visits and return a list of all single-epoch images of a specified type corresponding to those visits.
+*Discussion:* The common image types will be raw, PVI (processed, i.e., calibrated, visit image), and difference image."
+
+This requirement suggests that the Web API Aspect must provide an interface for querying image data by a visit ID, or list of them, and by a recognized image type.
+
+- DMS-PRTL-REQ-0036, Query for Single Epoch Raft Images: "The Portal aspect shall enable a user to limit the list of images selected by a single-epoch visit image query to those from a specified raft."
+
+This requirement suggests that either the Web API Aspect must provide an additional query-restriction capability that takes a raft ID (or CCD ID, see below), or there must be a straightforward way for the Portal Aspect to apply a raft ID restriction on the results of a single-visit image query.
+
+- DMS-PRTL-REQ-0037, Query for Single Epoch CCD Image: "The Portal aspect shall enable a user to limit the list of images selected by a single-epoch visit image query to those from a specified CCD."
+
+The same considerations apply here as to the raft-ID-based query above.
+Note, however, that post-hoc limitations of visit queries to one out of 189 query results (i.e., by CCD ID) is a fairly inefficient process.
+This suggests that it may be preferable to provide a server-side capability for restricting queries by CCD ID.
+This appears to be consistent with the Butler Gen3 data model and the plan to persist images on the back end in CCD-sized files.
+
+- DMS-PRTL-REQ-0038, Single-Epoch Image Query Specifications: "The Portal aspect shall provide UI support for queries for visits and their single-epoch images of specified type, based on image metadata parameters including pointing, time and date, and filter selection, as well as on parameters from the Reformatted EFD.
+*Discussion:* The parameters specifically named are expected to be highlighted in the UI, rather than requiring the user to scroll through a long generic-table-query form to find the appropriate fields.
+The UI will provide support for generating a join query including tables from the R-EFD, and for selecting the R-EFD tables and columns to use."
+
+An efficient Portal Aspect implementation here depends on the ability to perform these complex queries on the server side.
+This appears to require the ability to perform ``JOIN`` queries between the primary image and visit metadata table(s) and EFD tables, which must therefore be on the same TAP service and, most likely, on the same underlying database service (though outside-the-database JOINs at the TAP layer are a possible technical alternative).
+
+(INCOMPLETE - high-water-mark of completed work on this Appendix)
+
+- DMS-PRTL-REQ-0039, Coadded Image Query Specifications: "The Portal aspect shall provide UI support for queries for coadded images based on the image metadata that describe the provenance of the images (e.g., filters, position on the sky, date, number of single-epoch images, coverage, survey depth)."
+
+
+
+
+Service Implications
+--------------------
+
 
 
 
