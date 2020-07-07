@@ -203,9 +203,23 @@ DPDD
 
 According to the DPDD, the following types of image data products will be provided:
 
-Current Science Pipelines algorithmic considerations
-----------------------------------------------------
+Current Science Pipelines considerations relating to coadds
+-----------------------------------------------------------
 
+Compressed Processed Visit Images
+---------------------------------
+
+It was realized early in the life of the LSST project that retaining the fully-calibrated single-epoch images, known as Processed Visit Images (PVIs), would be one of the largest single contributions to the storage capacity budget for the project.
+In the preliminary-design era, then, it was decided to plan for a tradeoff of computation against storage space, baselining a capability to recreate PVIs on-demand from the (much smaller) raw data.
+(The raw images are smaller because a) they are missing variance and mask planes, and b) they have an integer pixel data type and are generally more suitable for lossless compression as a result.)
+
+Subsequently, after the start of construction, the team recognized the existence of common use cases from the transient and variable phenomena science themes that involve requests for stacks of cutouts following an object through time in the survey.
+Such requests could not have been addressed in a timely way if all the single-epoch images had to be re-created.
+Under :jira:`RFC-325` a proposal was adopted to add the storage of lossy-compressed PVIs to the baseline, with image services to match.
+
+At a technical level, the current tentative approach to this is to define a new Butler dataset type, ``calexp_comp``, which represents PVIs processed through astronomy-quality lossy compression (``calexp`` is the dataset type for the PVIs themselves).
+Rubin/LSST image services will be able to return both native and compressed PVIs, and perform cutouts on either type.
+Image metadata services will treat them as separate datasets differing primarily only in their ``dataproduct_subtype`` and their size.
 
 
 Use Cases
