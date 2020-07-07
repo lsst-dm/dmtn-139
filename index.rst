@@ -39,9 +39,9 @@
 
    Feel free to delete this instructional comment.
 
-:tocdepth: 1
+:tocdepth: 2
 
-.. Please do not modify tocdepth; will be fixed when a new Sphinx theme is shipped.
+.. Please do not modify tocdepth to a value other than 1; will be fixed when a new Sphinx theme is shipped.
 
 .. sectnum::
 
