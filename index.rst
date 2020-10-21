@@ -232,12 +232,81 @@ Community Standards
 IVOA
 ----
 
+The planned image service architecture is based on the following core standards:
+
+Endpoint services
+^^^^^^^^^^^^^^^^^
+
+Image metadata query:
+  ObsTAP, from ObsCore 1.1 or later (as an initial priority), with SIAv2 (also ObsCore-based and serving equivalent data) later
+
+Catalog query:
+  TAP 1.1 or later
+
+Image cutout service:
+  SODA 1.0 or later
+
+DataLink *links* service:
+  DataLink 1.0 or later (very likely to be revised in the near future)
+
+Note that there is no general "image service" *per se* in the current IVOA model.
+SIAv2 (and its predecessor) are image *metadata* services, operating on a model of queries returning URLs to the actual images (possibly indirected through DataLink *links* services).
+The endpoints described by those URLs need not provide anything other than static file service.
+The SODA standard covers the specific case of cutouts (in general *not* previously existing) from identified datasets which themselves may or may not be materialized or statically accessible.
+
+Supporting standards
+^^^^^^^^^^^^^^^^^^^^
+
+Service endpoints, self-description, and status:
+  VOSI 1.1 or later
+
+Service parameters and datatype definitions:
+  DALI 1.1 or later
+
+Asynchronous service interfaces:
+  UWS 1.1 or later
+
+Query language:
+  ADQL 2.00 or later (ADQL 2.1 is imminent)
+
+Extensibility
+^^^^^^^^^^^^^
+
+Where these standards fall short of meeting the needs of the project:
+
+- Many of them have specified avenues for enhancing a service with additional metadata or parameters.  Examples:
+
+  - A TAP/ObsTAP service can supply additional information in its `TAP_SCHEMA` schema;
+
+  - A DataLink *links* service can provide publisher-specific values for the `semantics` column; and
+
+  - An ObsCore table may contain a) optional ObsCore-defined columns, and/or b) additional service-specific columns.
+
+- The project is free to develop service protocols and data formats of its own.
+  However, consistent with the "VO-first" plan, we will strive to respect the layering of standards.
+  For example, if the creation of a non-IVOA-standard service is required in order to fulfill a need, it should still be compliant with DALI, VOSI, and, if applicable, UWS.
+  This policy facilitates service concepts such as the use of DataLink to direct users to these non-standard services.
+
+Service Registration
+^^^^^^^^^^^^^^^^^^^^
+
+The present edition of this document does not address how Rubin/LSST services will be represented in the IVOA Registry/ies, nor does it address whether the project will operate its own registry.
+
 CAOM2
 -----
 
 FITS
 ----
 
+WCS Metadata
+^^^^^^^^^^^^
+
+Image files produced in the FITS format by the project will contain FITS-standard WCS information.
+For coadded images, which are warped to a precise pixel grid, a trivial TAN projection will be used.
+For FITS tiles in the HiPS image maps produced by the project, the HPX projection will be used.
+
+For single-epoch images where the actual Camera WCS must be modeled, the full-precision WCS model produced by the pipeline will not be completely captured by FITS-standard WCS headers.
+Full-precision WCS data will be included in an extension in the image file containing WCS information, using the ASDF model also used by JWST, represented as YAML ASCII string data in a binary table extension.
 
 Service Concept
 ===============
@@ -263,8 +332,8 @@ Service Details
 ObsTAP Service
 --------------
 
-TAP Service for Observation Metadata
-------------------------------------
+TAP Service for Additional Observation Metadata
+-----------------------------------------------
 
 SIAv2 Service
 -------------
@@ -274,6 +343,29 @@ SODA Service(s)
 
 HiPS Service
 ------------
+
+Unlike the other services discussed above, a standards-conformant HiPS service is not defined within the DALI/VOSI framework and does not have to have any server-side intelligence; it is perfectly acceptable for a HiPS service to be a static file-access service, with URLs directly mapped onto a physical directory tree on the server.
+A HiPS service need not provide an `/availability` endpoint and has no well-defined way to provide a `/capabilities` endpoint even if the publisher so desired.
+
+A HiPS service *may* satisfy the file-access expectations of the standard by materializing the files at run time instead of serving them from a static tree.
+However, in the present proposal we do not expect to do so.
+
+Availability Endpoints
+----------------------
+
+Contemporary IVOA-standard services based on DALI and VOSI are generally expected to each have an `/availability` endpoint.
+Logically, in a production scenario, a service cannot completely cover the space of availability reporting, including all forms of downtime, entirely on its own.
+It can report itself as down when the service itself is operating normally but is unable to reach other services or resources on which it transitively depends, but it cannot in general always report on its own downtime.
+
+In order to address this, we propose an architecture in which the `/availability` endpoints of all services are redirected, for example at the Kubernetes ingest-rule level, to a lightweight central "availability status" dashboard service, which, ideally, could be maintained "up" even during major datacenter maintenance, to allow serving the "down" status of the actual services, and an expected return-to-service time if available.
+This service should of course return VOSI-compatible results.
+
+It might then be appropriate for the "dashboard" service to call through to hidden `/availability` endpoints of the individual services to obtain any "down" indications from them that arise from transitive service-dependency issues.
+However, this will require more detailed analysis.
+
+The Rubin Science Platform landing page should make available a "red/green" status display based on the "dashboard" services.
+One possible implementation might be a "summary" status that is always displayed, with the ability to click through on it to a more detailed status page.
+
 
 User Access Scenarios
 =====================
@@ -293,6 +385,28 @@ Notebook Aspect and External Access
 PyVO & Astroquery
 
 Development of PyVO SIAv2 capability.
+
+
+Major Open Questions
+====================
+
+IVOA Registry Representation
+----------------------------
+
+As noted above, the present proposal does not address this issue.
+
+HiPS Discovery
+--------------
+
+As noted above, we currently propose providing two endpoints for each map, serving the same "upper" (lower-resolution) layers of the HiPS map, with the highest-resolution layer(s) only in the endpoint which requires data rights for access.
+Project requirements call for the HiPS maps from the LSST survey to be registered with the CDS HiPS registry.
+The public-access map should be registered with `hips_status = public master clonableOnce`, to support the HiPS model for replication of openly accessible datasets.
+The data-rights-limited map should be registered with `hips_status = private master unclonable`.
+Pending future developments that might change this decision, the replication of the limited-access data should be carried out through the larger process of establishment of "independent Data Access Centers" (IDACs) and distribution of data to them, rather than through the HiPS replication mechanism.
+
+MOC Discovery
+-------------
+
 
 
 Appendix: Portal-derived Requirements on Image Services
