@@ -195,8 +195,8 @@ LSP Requirements (LDM-554)
 
 
 
-Image Data Products
-===================
+Planned Image Data Products
+===========================
 
 DPDD
 ----
@@ -408,9 +408,79 @@ MOC Discovery
 -------------
 
 
+Appendices
+==========
+
+Appendix: Implementation Notes
+------------------------------
+
+While the principal purpose of this note is to define the service-level architecture, there are some implementation details that have been developed as a proposal alongside that architecture, and that are worth documenting.
+
+We address the non-TAP image-related services first.
+A short discussion of some relevant TAP issues follows.
+
+Generic DALI/VOSI service implementation framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The service concept described above involves the creation of a variety of services, some directly conformant to application-level IVOA standards such as SODA and DataLink, and some unique to Rubin but conformant to the framework standards such as DALI and VOSI.
+In order to ease the development, deployment, and maintenance of these services, we envision the creation and/or re-use of a framework for supplying these common elements of a service implementation.
+
+Several of the envisioned services (SODA/cutouts, virtual-data-product re-creation, forced photometry on demand) ultimately require the invocation of Rubin Science Pipelines stack code, with its Python interfaces.
+Hence we would need either a service framework actually implemented in Python, or one implemented in another language such as Java or its descendants which is then able to invoke a "payload" of Python code.
+
+The service framework should provide, at a minimum:
+
+- skeleton implementations of `/availability` and `/capability` endpoints, with an extensible interface for supplying service-application-specific behavior where needed; and
+- definition and parsing of a URL-with-query-parameters API, following DALI standards, including the parsing of DALI-compliant parameter value types and their translation into Python objects, ideally Astropy objects where available.
+
+Desirable features would include:
+
+- the ability to generate DataLink-compatible service descriptors from the API parameter definitions; 
+- the ability to either generate, or start from, an OpenAPI v3 service description, enabling the provision of "Swagger" UI pages for users to explore the APIs' capabilities, and perhaps in the future to facilitate the provision of metadata-driven widgets in the Notebook Aspect for access to the APIs.
+
+For an example of the use of the OpenAPI specification and Swagger to deliver an elementary UI, see the CADC TAP service page at https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/ and the SIA service page at https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/ .
+The value of this for user education and for operations-team debugging activities is unmistakable.
+There is a cost in providing interfaces of this sort, but it is greatly mitigated by building the necessary apparatus in a generic way.
+
+**Some** aspects of this can likely be obtained on the Java side by the adoption of layered elements of the CADC code base.
+However, the propagation of DALI parameters to Python code that actually performs computational work is an important part of the vision.
+On this side, there is, at the time of writing, no fully satisfactory open-source Python framework with this features.
+It would be immediately useful internally, as well as a valuable community service, if the Rubin project were to produce such a framework.
+
+Such a framework would be designed to minimize the "boilerplate" work on API parsing and DALI/VOSI-conformance associated with delivering a new service.
+
+
+UWS-based asynchronous services
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+VOTable annotation
+^^^^^^^^^^^^^^^^^^
+
+
+TAP (and ObsTAP)
+^^^^^^^^^^^^^^^^
+
+The TAP service planned for use in the Science Platform is the CADC-derived, Java-based one which is already in use in the prototype/demonstration-oriented Science Platform deployed at NCSA.
+Thus far the CADC code base has proven valuable.
+It was relatively easily adapted to the Qserv back end, and the relationship between the Rubin project and CADC is positive and has allowed upstreaming a number of changes.
+
+The Rubin project has not yet attempted to use the currently limited capabilities of the CADC framework for DataLink service descriptor or `<GROUP>` annotation of VOTable query results.
+Because DataLink is an important part of the service concept described in this note, we may find that it is an area in which it is valuable for us to make a substantial upstream contribution.
+
+SIAv2
+^^^^^
+
+As also noted in the main body of this document, CADC has an implementation of SIAv2 which performs virtually all of the actual work of performing a query by deferring to an underlying ObsTAP service.
+This is feasible because of the close alignment of the ObsCore (which contains ObsTAP) and SIAv2 standards, in which almost all SIAv2 query capabilities are expressible as ADQL against the ObsCore data model.
+We should investigate whether the CADC implementation is in fact practical for use against Rubin's specific ObsTAP service.
+
+Note that an implementation of SIAv2 as a call-through to ObsTAP would then directly benefit from any progress on DataLink and/or `<GROUP>` annotations in the VOTable output from the ObsTAP service.
+
+
 
 Appendix: Portal-derived Requirements on Image Services
-=======================================================
+-------------------------------------------------------
 
 The LDM-554 requirements on Portal Aspect functionality include a number of requirements on capabilities for image and image metaata queries.
 While these requirements do not specify an implementation for the interface with any underlying services used for image data retrieval, the basic architecture of the three-Aspect Science Platform implies that data access capabilities in the Portal Aspect (and Notebook Aspect) should be paralleled by capabilities in the Web API Aspect.
@@ -418,7 +488,7 @@ While these requirements do not specify an implementation for the interface with
 In this Appendix we list the relevant Portal Aspect requirements and discuss their implications on Web API Aspect image and image-metadata query services.
 
 Note that many of the capabilities mentioned below will not be part of the "frozen" post-DM-10 Portal Aspect.
-However, if a future Portal Aspect implementation is to provide these capabilities, it must be understood in advance what Web API Aspect capabilities must be available for the Portal Aspect capabilities eventually to be implemented.
+However, if a future Portal Aspect implementation is to provide these capabilities, it should be understood in advance what Web API Aspect capabilities would have to be available for the Portal Aspect capabilities eventually to be implemented.
 
 Requirements
 ------------
