@@ -198,16 +198,23 @@ LSP Requirements (LDM-554)
 Planned Image Data Products
 ===========================
 
-DPDD
-----
-
 According to the DPDD, the following types of image data products will be provided:
 
+Deep Coadds
+-----------
+
+
+
 Current Science Pipelines considerations relating to coadds
------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Single-epoch Images
+-------------------
 
 Compressed Processed Visit Images
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It was realized early in the life of the LSST project that retaining the fully-calibrated single-epoch images, known as Processed Visit Images (PVIs), would be one of the largest single contributions to the storage capacity budget for the project.
 In the preliminary-design era, then, it was decided to plan for a tradeoff of computation against storage space, baselining a capability to recreate PVIs on-demand from the (much smaller) raw data.
@@ -222,8 +229,58 @@ Rubin/LSST image services will be able to return both native and compressed PVIs
 Image metadata services will treat them as separate datasets differing primarily only in their ``dataproduct_subtype`` and their size.
 
 
+Processed Visit Images
+^^^^^^^^^^^^^^^^^^^^^^
+
+
+Raw Data
+^^^^^^^^
+
+Raw image data is proposed to be available in two forms: the original files materialized at the time of data acquisition, and files with the original raw pixel data but updated metadata (particularly WCS) determined at the time of pipeline processing.
+It is not clear whether the updated-metadata files would be materialized or created on demand.
+
+
 Use Cases
 =========
+
+Image Cutouts
+-------------
+
+The following use cases are guiding our development of the SODA-based image cutout service.
+They are arranged in an approximate order of increased implementation complexity.
+
+Pixel-preserving cutouts of explicitly specified images
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Given a specific image ID, or list of image IDs, identified from an image metadata service (or in some other way - the same identifiers must be available in the context of retrieving an image from the Butler) - in this use case the user will wish to extract a subregion of the image, preserving exactly the pixel values and coordinates.
+No reprojection or rescaling is involved.
+Metadata such as the WCS and PSF are expected to be preserved as accurately as possible.
+This use case is equally applicable to raw, PVI, compressed-PVI, diffim, and coadded images.
+Applied to coadded images, it is only an example of this use case if the ID(s) of a patch-level image (or images) is (are) supplied.
+It should be capable of being run against both persisted and non-persisted ("virtual") data products, recognizing that if re-creation of a non-persisted data product is involved, the response latency will be longer.
+
+Reprojected/resampled cutouts of explicitly specified images
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this use case, the output image(s) is (are) resampled to a different grid than the input.
+For example, this could arise when assembling a "filmstrip" of cutouts from PVIs across the entire survey for a specific point on the sky, and projecting them all into a "north-up" pixel grid.
+Other uses might include rebinning to a coarser pixel scale, or projecting PVIs onto a tangent plane.
+In this use case, as in the previous one, the image(s) must be specified via explicit single-epoch, single-CCD IDs (typically visit IDs), or explicit coadd patch IDs.
+
+Mosaics from single visits
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this use case, the user is interested in coverage of a larger region on the sky from a single visit than a CCD, or a region that overlaps a boundary between CCDs or rafts.
+Note that the inter-CCD and inter-raft gaps are in no way guaranteed to be integer numbers of pixels, or even precisely parallel, so mosaics crossing gaps will have discontinuities in their WCS unless they are reprojected.
+It may be useful to provide an option to the user to choose between reprojection onto a tangent plane vs. pixel-preserving mosacing into a "nominal" geometry with parallel, integer gaps; this would be outside the standard SODA option space.
+
+Arbitrary optimal cutouts from coadds
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generation of preview graphics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In each of the above use cases, the user will have the option of requesting a preview image in a commonly available format (e.g., PNG) instead of the standard FITS serialization.
 
 
 Community Standards
@@ -276,9 +333,9 @@ Where these standards fall short of meeting the needs of the project:
 
 - Many of them have specified avenues for enhancing a service with additional metadata or parameters.  Examples:
 
-  - A TAP/ObsTAP service can supply additional information in its `TAP_SCHEMA` schema;
+  - A TAP/ObsTAP service can supply additional information in its ``TAP_SCHEMA`` schema;
 
-  - A DataLink *links* service can provide publisher-specific values for the `semantics` column; and
+  - A DataLink *links* service can provide publisher-specific values for the ``semantics`` column; and
 
   - An ObsCore table may contain a) optional ObsCore-defined columns, and/or b) additional service-specific columns.
 
@@ -295,8 +352,17 @@ The present edition of this document does not address how Rubin/LSST services wi
 CAOM2
 -----
 
+We plan to make metadata for both single-epoch images and coadd tiles available through the CAOM2 data model.
+This observation metadata model was developed by CADC, but is also actively used by MAST and IRSA for their image data collections, with progressively increasing levels of commitment in recent years.
+Rubin personnel have been active participants in workshops on the development of the data model.
+
+See https://www.opencadc.org/caom2/ for details on the data model.
+
+
 FITS
 ----
+
+
 
 WCS Metadata
 ^^^^^^^^^^^^
@@ -326,6 +392,7 @@ ObsCore
 Special Case: HiPS
 ------------------
 
+
 Service Details
 ===============
 
@@ -341,11 +408,38 @@ SIAv2 Service
 SODA Service(s)
 ---------------
 
+The function of the SODA service is to support performing cutouts from the collected LSST image data.
+
+Two basic modes of operation are provided:
+- "Basic" mode: perform cutouts from specific image datasets (essentially, files) named in the call to the service, with the image identifiers obtained from calls to the ObsTAP and/or SIAv2 services; and
+- "Optimal/Mosaic" mode: Perform cutouts from broad meta-datasets, specifically the available coadded datasets, e.g. "from the DR2 r-band deep coadd".
+  In this mode, the cutout service is free, and perhaps even expected, to attempt to provide an "optimal" response, which may not correspond to the result from the first mode for any one extant dataset - i.e., the service may combine data from multiple overlapping tiles.
+
+In "Basic" mode, the cutouts are general strict subsets of the pixel data from the underlying image dataset, with no resampling.
+Generally these underlying images will be CCD-scale, for single-epoch data, and "patch"-scale, for coadds.
+The resulting cutout will include WCS and PSF information essentially identical to that for the input image.
+In "Optimal/Mosaic" mode, the output may be resampled, e.g., to a local tangent plane, and be constructed as a mosaic of data from multiple files.
+
+If cell-based coadds are in fact implemented as currently proposed, the "Optimal/Mosaic" SODA mode would use those as its inputs, and would therefore produce cutouts more precisely consistent with the data used to perform deblending and shape measurement.
+
+In the baseline service definition, as a simplification, we propose that the "Optimal/Mosaic" mode be provided only for coadds.
+As a stretch goal, it might also be provided for visit-scale single-epoch data.
+(Note that making a cutout across CCD boundaries in a visit-scale image in general will require resampling if the output is to have a reasonably smooth WCS.)
+
+The standard DALI ``RESPONSEFORMAT`` option is provided - as an extension to the SODA 1.0 standard, but one that is clearly likely to be compatible with future SODA elaboration - to allow for return of images in alternate formats.
+The precise formats to be supported remain to be determined.
+FITS (which will be the default in any event) will of course be supported, and most likely at least PNG for preview images.
+
+Note: The definition of this service has evolved from the original ``imgserv`` concept in the DAX design that predated the "VO-first" policy, probably more than any other part of the entire API Aspect design.
+The ``imgserv`` concept was of a general "image service", but with an aspect of image-metadata search as well.
+In the present concept these functions are more clearly separated, but the ability to perform a cutout from an all-sky coadded image dataset is held over from the original design.
+
+
 HiPS Service
 ------------
 
 Unlike the other services discussed above, a standards-conformant HiPS service is not defined within the DALI/VOSI framework and does not have to have any server-side intelligence; it is perfectly acceptable for a HiPS service to be a static file-access service, with URLs directly mapped onto a physical directory tree on the server.
-A HiPS service need not provide an `/availability` endpoint and has no well-defined way to provide a `/capabilities` endpoint even if the publisher so desired.
+A HiPS service need not provide an ``/availability`` endpoint and has no well-defined way to provide a ``/capabilities`` endpoint even if the publisher so desired.
 
 A HiPS service *may* satisfy the file-access expectations of the standard by materializing the files at run time instead of serving them from a static tree.
 However, in the present proposal we do not expect to do so.
@@ -353,14 +447,14 @@ However, in the present proposal we do not expect to do so.
 Availability Endpoints
 ----------------------
 
-Contemporary IVOA-standard services based on DALI and VOSI are generally expected to each have an `/availability` endpoint.
+Contemporary IVOA-standard services based on DALI and VOSI are generally expected to each have an ``/availability`` endpoint.
 Logically, in a production scenario, a service cannot completely cover the space of availability reporting, including all forms of downtime, entirely on its own.
 It can report itself as down when the service itself is operating normally but is unable to reach other services or resources on which it transitively depends, but it cannot in general always report on its own downtime.
 
-In order to address this, we propose an architecture in which the `/availability` endpoints of all services are redirected, for example at the Kubernetes ingest-rule level, to a lightweight central "availability status" dashboard service, which, ideally, could be maintained "up" even during major datacenter maintenance, to allow serving the "down" status of the actual services, and an expected return-to-service time if available.
+In order to address this, we propose an architecture in which the ``/availability`` endpoints of all services are redirected, for example at the Kubernetes ingest-rule level, to a lightweight central "availability status" dashboard service, which, ideally, could be maintained "up" even during major datacenter maintenance, to allow serving the "down" status of the actual services, and an expected return-to-service time if available.
 This service should of course return VOSI-compatible results.
 
-It might then be appropriate for the "dashboard" service to call through to hidden `/availability` endpoints of the individual services to obtain any "down" indications from them that arise from transitive service-dependency issues.
+It might then be appropriate for the "dashboard" service to call through to hidden ``/availability`` endpoints of the individual services to obtain any "down" indications from them that arise from transitive service-dependency issues.
 However, this will require more detailed analysis.
 
 The Rubin Science Platform landing page should make available a "red/green" status display based on the "dashboard" services.
@@ -452,6 +546,9 @@ Such a framework would be designed to minimize the "boilerplate" work on API par
 
 UWS-based asynchronous services
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A number of the services that the Science Platform will require will be natural candidates for implementation as asynchronous services.
+
 
 
 VOTable annotation
